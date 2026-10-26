@@ -222,8 +222,12 @@ Choix :
   `Menage.app` (Info.plist avec `LSUIElement`, bundle id `dev.ager.menage`). Les notifications ont
   besoin d'un vrai bundle, d'où ce script.
 - **Pas d'App Sandbox.** Il interdirait de scanner le dossier perso, c'est pour ça que l'app ne
-  passera pas par l'App Store. Signature ad hoc pour commencer, puis le certificat Developer ID
-  d'ager si on veut la distribuer.
+  passera pas par l'App Store.
+- **Signature** (depuis le 2026-10-26) : certificat « Apple Development » d'ager, runtime renforcé.
+  L'exigence désignée repose sur le certificat, pas sur le binaire : macOS garde les autorisations
+  d'une version à l'autre. Le script prend « Developer ID Application » en priorité s'il existe
+  (nécessaire seulement pour distribuer l'app), et retombe sur une signature ad hoc sans certificat.
+  Il a fallu installer l'intermédiaire Apple WWDR G3 : le trousseau n'avait que l'ancien, expiré en 2023.
 - **Accès complet au disque** : sans lui, certains dossiers (Mail, Messages, Safari) sont illisibles.
   L'app le détecte, le signale (« X dossiers ignorés ») et ouvre le bon panneau des Réglages.
   Elle fonctionne sans.
