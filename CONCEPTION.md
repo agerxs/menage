@@ -138,6 +138,38 @@ Ce qui a été construit (étape 3) :
 - Scan automatique une fois par jour quand l'app tourne (lancement à l'ouverture de session via
   `SMAppService`).
 
+Ce qui a été construit (étape 4) :
+- Après **chaque** scan de la carte, manuel ou automatique, un instantané JSON est écrit dans
+  `~/Library/Application Support/Menage/history/` : les dossiers d'au moins 10 Mo jusqu'à 3 niveaux
+  sous le dossier perso, plus l'espace libre (élagage décrit plus bas) ; ce sont les propres fichiers
+  de l'app, supprimés directement.
+- Comparaison sur trois périodes : depuis l'analyse précédente, sur 7 jours, sur 30 jours (si
+  l'historique est plus court, on compare au plus ancien instantané). On liste ce qui a grossi d'au
+  moins 100 Mo. **Un parent n'est pas listé si un de ses enfants explique à lui seul 80 % de sa
+  croissance** : « `Library/Caches/com.openai.codex` +3 Go » suffit, inutile d'ajouter `Library`.
+  « Voir sur la carte » ouvre la carte sur ce dossier.
+- Courbe de l'espace libre (Swift Charts, framework système) : un relevé par heure dans
+  `free-space.jsonl`, 90 jours gardés.
+- **Scan quotidien** : toutes les heures, l'app vérifie si le dernier instantané a plus de 23 h. Le
+  premier passage attend 10 minutes après le lancement, pour ne pas peser sur l'ouverture de session.
+  Le scan tourne en priorité basse, et pas en mode économie d'énergie ni quand le Mac chauffe.
+  Désactivable dans l'onglet.
+- **Notification** quand un scan automatique trouve un dossier qui a grossi de 5 Go ou plus depuis le
+  précédent : c'est le signal qui aurait prévenu avant le disque plein.
+
+Fausses croissances écartées (relevées par la vérification de l'étape 4) :
+- **Dossier redevenu lisible** : chaque instantané garde la liste des dossiers illisibles. Si l'un
+  d'eux change de statut entre deux scans (accès complet au disque accordé), ni lui, ni ses parents,
+  ni ses enfants ne sont comparés. Sinon Mail passait de 0 à 35 Go et déclenchait une alerte.
+- **Renommage ou déplacement** : un dossier **nouveau** dont la taille correspond, à 5 % près, à une
+  baisse ailleurs est affiché « sans doute déplacé depuis… », en gris, jamais notifié. Ses parents ne
+  comptent que leur vraie croissance (`devapps` +8 Go dont 5 Go de vidéos déplacées = 3 Go réels).
+  Un dossier existant qui grossit n'est jamais pris pour un déplacement : ce serait une coïncidence.
+- Le scan quotidien ne touche plus à l'affichage : la carte reste utilisable et garde sa position.
+  « Voir sur la carte » sans arbre en mémoire lance l'analyse puis y va.
+- Élagage : tout est gardé sur 7 jours, puis un instantané par jour, 90 au plus. Un instantané daté
+  du futur (horloge déréglée) est ignoré, et ne bloque plus le scan quotidien.
+
 ## Sécurité : règles non négociables
 
 1. **Rien n'est supprimé définitivement.** Tout passe par `FileManager.trashItem`, donc la Corbeille.

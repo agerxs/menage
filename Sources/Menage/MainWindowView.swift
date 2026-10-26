@@ -7,12 +7,14 @@ struct MainWindowView: View {
 
     let cleaner: CleanerModel
     let map: DiskMapModel
+    let history: HistoryModel
     @AppStorage("main.tab") private var tab = Tab.nettoyage
 
     enum Tab: String, CaseIterable {
         case nettoyage = "Nettoyage"
         case carte = "Carte"
         case grosFichiers = "Gros fichiers"
+        case historique = "Historique"
         case journal = "Journal"
     }
 
@@ -37,6 +39,7 @@ struct MainWindowView: View {
                 case .nettoyage: CleanerView(model: cleaner)
                 case .carte: DiskMapView(model: map)
                 case .grosFichiers: BigFilesView(model: map)
+                case .historique: HistoryView(model: history, map: map) { tab = .carte }
                 case .journal: JournalView(entries: cleaner.journalEntries)
                 }
             }

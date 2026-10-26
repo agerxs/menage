@@ -24,6 +24,13 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         center?.add(UNNotificationRequest(identifier: "menage.\(alert.signal.rawValue)", content: content, trigger: nil))
     }
 
+    func post(id: String, title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        center?.add(UNNotificationRequest(identifier: id, content: content, trigger: nil))
+    }
+
     func postTest() {
         let content = UNMutableNotificationContent()
         content.title = "Ménage"

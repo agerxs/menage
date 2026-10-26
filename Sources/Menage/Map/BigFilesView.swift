@@ -31,7 +31,7 @@ struct BigFilesView: View {
                 Button(model.root == nil ? "Analyser le dossier perso" : "Relancer l'analyse") {
                     Task { await model.scan() }
                 }
-                .disabled(model.phase == .scanning)
+                .disabled(model.isScanning)
             }
             Divider()
             content.frame(maxWidth: .infinity, maxHeight: .infinity)

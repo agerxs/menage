@@ -27,6 +27,8 @@ final class DiskMapModel {
     let scanRoot = FileManager.default.homeDirectoryForCurrentUser
     @ObservationIgnored private let protectedPaths: @MainActor () -> ProtectedPaths
     @ObservationIgnored private let onTrash: @MainActor () -> Void
+    /// Appelé après chaque scan. `automatic` : lancé par le scan quotidien, pas par un clic.
+    @ObservationIgnored var onScanned: (@MainActor (DiskScanResult, _ automatic: Bool) -> Void)?
 
     /// `protectedPaths` : les chemins protégés à jour (ils dépendent des racines de projets réglées).
     /// `onTrash` : appelé après une mise à la Corbeille, pour rafraîchir le journal.
@@ -50,11 +52,22 @@ final class DiskMapModel {
         return root.node(atPath: selectedPath)
     }
 
-    func scan() async {
-        guard phase != .scanning else { return }
-        phase = .scanning
-        progressFiles = 0
-        progressBytes = 0
+    /// Le scan quotidien tourne sans toucher à l'affichage : la carte reste utilisable pendant ce temps.
+    private(set) var backgroundScanning = false
+    /// Dossier à montrer dès que l'arbre est là (« Voir sur la carte » avant tout scan).
+    @ObservationIgnored private var pendingReveal: String?
+
+    var isScanning: Bool { phase == .scanning || backgroundScanning }
+
+    func scan(automatic: Bool = false) async {
+        guard !isScanning else { return }
+        if automatic {
+            backgroundScanning = true
+        } else {
+            phase = .scanning
+            progressFiles = 0
+            progressBytes = 0
+        }
         lastError = nil
         let progress = ScanProgress()
         let root = scanRoot
@@ -66,7 +79,8 @@ final class DiskMapModel {
                 self?.progressBytes = progress.bytes
             }
         }
-        let result = await Task.detached(priority: .userInitiated) {
+        // Le scan quotidien passe en arrière-plan : il ne doit pas ralentir ce que fait l'utilisateur.
+        let result = await Task.detached(priority: automatic ? .background : .userInitiated) {
             DiskScanner().scan(root, progress: progress)
         }.value
         poller.cancel()
@@ -77,9 +91,30 @@ final class DiskMapModel {
         fileCount = result.fileCount
         scanDuration = result.duration
         scanDate = Date()
-        currentPath = nil
-        selectedPath = nil
+        // On reste où l'on était si ce dossier existe toujours.
+        if let path = currentPath, result.root.node(atPath: path) == nil { currentPath = nil }
+        if let path = selectedPath, result.root.node(atPath: path) == nil { selectedPath = nil }
+        backgroundScanning = false
         phase = .ready
+        if let pending = pendingReveal {
+            pendingReveal = nil
+            reveal(relativePath: pending)
+        }
+        onScanned?(result, automatic)
+    }
+
+    /// Ouvre la carte sur ce dossier (relatif au dossier perso). Sans arbre en mémoire (app relancée
+    /// depuis), lance d'abord l'analyse et y va ensuite.
+    func reveal(relativePath: String) {
+        guard let root else {
+            pendingReveal = relativePath
+            Task { await scan() }
+            return
+        }
+        let path = scanRoot.appendingPathComponent(relativePath).path
+        guard let node = root.node(atPath: path) else { return }
+        currentPath = node.canOpen ? node.path : (path as NSString).deletingLastPathComponent
+        selectedPath = node.canOpen ? nil : node.path
     }
 
     func open(_ node: DiskNode) {

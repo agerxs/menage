@@ -12,7 +12,7 @@ struct DiskMapView: View {
                 Button(model.root == nil ? "Analyser le dossier perso" : "Relancer l'analyse") {
                     Task { await model.scan() }
                 }
-                .disabled(model.phase == .scanning)
+                .disabled(model.isScanning)
             }
             Divider()
             content
@@ -32,6 +32,9 @@ struct DiskMapView: View {
     }
 
     private var subtitle: String {
+        if model.backgroundScanning, model.phase != .scanning {
+            return "Analyse quotidienne en cours, en arrière-plan. La carte se mettra à jour à la fin."
+        }
         switch model.phase {
         case .idle:
             return "Mesure tout le dossier perso. Environ une minute ; rien n'est modifié."

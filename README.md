@@ -19,6 +19,7 @@ MENAGE_RENDER=/tmp/panel.png .build/debug/Menage          # panneau de la barre 
 MENAGE_SCAN=1 .build/debug/Menage                         # analyse du nettoyeur dans le terminal
 MENAGE_MAP=~ .build/debug/Menage                          # scan de la carte : durée, plus gros éléments
 MENAGE_TREEMAP=/tmp/carte.png .build/debug/Menage         # carte du dossier perso en image
+MENAGE_HISTORY=/tmp/historique.png .build/debug/Menage    # onglet Historique, données de test, en image
 ```
 
 Les boutons apparaissent en jaune barré sur l'image : le moteur de rendu ne dessine pas les

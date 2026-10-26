@@ -6,6 +6,7 @@ struct MenageApp: App {
     @State private var monitor = MonitorModel()
     @State private var cleaner: CleanerModel
     @State private var map: DiskMapModel
+    @State private var history: HistoryModel
 
     init() {
         #if DEBUG
@@ -13,15 +14,18 @@ struct MenageApp: App {
         ScanDump.runIfRequested()
         MapDump.runIfRequested()
         MapDump.renderTreemapIfRequested()
+        HistoryPreview.renderIfRequested()
         #endif
         let cleaner = CleanerModel()
         _cleaner = State(initialValue: cleaner)
-        _map = State(initialValue: DiskMapModel(
+        let map = DiskMapModel(
             protectedPaths: {
                 .standard(home: FileManager.default.homeDirectoryForCurrentUser, projectRoots: cleaner.projectRoots)
             },
             onTrash: { cleaner.reloadJournal() }
-        ))
+        )
+        _map = State(initialValue: map)
+        _history = State(initialValue: HistoryModel(map: map))
     }
 
     var body: some Scene {
@@ -33,7 +37,7 @@ struct MenageApp: App {
         .menuBarExtraStyle(.window)
 
         Window("Ménage", id: MainWindowView.windowID) {
-            MainWindowView(cleaner: cleaner, map: map)
+            MainWindowView(cleaner: cleaner, map: map, history: history)
         }
         .defaultSize(width: 980, height: 680)
 
