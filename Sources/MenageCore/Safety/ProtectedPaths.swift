@@ -28,6 +28,8 @@ public struct ProtectedPaths: Sendable {
             ],
             anchors: [
                 "/", "/Applications", "/Library", "/Users", h, "\(h)/Library", "\(h)/Library/Caches",
+                "\(h)/Library/Application Support", "\(h)/Library/Containers", "\(h)/Library/Group Containers",
+                "\(h)/Library/Preferences",
                 "\(h)/Library/Developer", "\(h)/Library/Android", "\(h)/Downloads", "\(h)/Applications",
                 "\(h)/.android", "\(h)/Movies", "\(h)/Music",
             ] + projectRoots.map(\.path)

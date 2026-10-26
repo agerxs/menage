@@ -133,6 +133,10 @@ final class CleanerModel {
         phase = .ready
     }
 
+    func reloadJournal() {
+        journalEntries = journal.read()
+    }
+
     func reveal(_ candidate: Candidate) {
         guard let location = candidate.location else { return }
         NSWorkspace.shared.activateFileViewerSelecting([location])

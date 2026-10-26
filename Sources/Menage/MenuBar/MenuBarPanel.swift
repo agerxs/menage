@@ -24,7 +24,7 @@ struct MenuBarPanel: View {
             }
             Button {
                 NSApp.activate()
-                openWindow(id: CleanerView.windowID)
+                openWindow(id: MainWindowView.windowID)
             } label: {
                 Label("Faire le ménage…", systemImage: "sparkles")
                     .frame(maxWidth: .infinity)

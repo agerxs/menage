@@ -1,62 +1,30 @@
 import MenageCore
 import SwiftUI
 
-/// La fenêtre « Faire le ménage » : analyse, choix, confirmation, journal.
+/// L'onglet Nettoyage : analyse, choix, confirmation.
 struct CleanerView: View {
-    static let windowID = "cleaner"
-
     @Bindable var model: CleanerModel
-    @State private var tab = Tab.nettoyage
     @State private var confirming = false
-
-    enum Tab: String, CaseIterable {
-        case nettoyage = "Nettoyage"
-        case journal = "Journal"
-    }
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-            Divider()
-            Group {
-                switch tab {
-                case .nettoyage: cleaningContent
-                case .journal: JournalView(entries: model.journalEntries)
+            ActionBar(subtitle: subtitle) {
+                Button(model.reports.isEmpty ? "Analyser" : "Relancer l'analyse") {
+                    Task { await model.scan() }
                 }
+                .disabled(model.isBusy)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            if tab == .nettoyage, model.phase == .ready || model.phase == .executing {
+            Divider()
+            cleaningContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if model.phase == .ready || model.phase == .executing {
                 Divider()
                 footer
             }
         }
-        .frame(minWidth: 680, minHeight: 520)
         .sheet(isPresented: $confirming) {
             ConfirmationSheet(model: model, isPresented: $confirming)
         }
-    }
-
-    private var header: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Faire le ménage").font(.title2.weight(.semibold))
-                Text(subtitle).font(.subheadline).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Picker("Vue", selection: $tab) {
-                ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
-            Button(model.reports.isEmpty ? "Analyser" : "Relancer l'analyse") {
-                tab = .nettoyage
-                Task { await model.scan() }
-            }
-            .disabled(model.isBusy)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
     }
 
     private var subtitle: String {

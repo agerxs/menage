@@ -11,10 +11,14 @@ scripts/bundle.sh             # build/Menage.app
 scripts/bundle.sh --install   # copie dans ~/Applications et lance
 ```
 
-Vérifier le rendu du panneau sans cliquer dans la barre de menus (build debug) :
+Outils de développement, build debug uniquement (ils ne suppriment rien, puis quittent) :
 
 ```bash
-swift build && MENAGE_RENDER=/tmp/panel.png .build/debug/Menage
+swift build
+MENAGE_RENDER=/tmp/panel.png .build/debug/Menage          # panneau de la barre de menus en image
+MENAGE_SCAN=1 .build/debug/Menage                         # analyse du nettoyeur dans le terminal
+MENAGE_MAP=~ .build/debug/Menage                          # scan de la carte : durée, plus gros éléments
+MENAGE_TREEMAP=/tmp/carte.png .build/debug/Menage         # carte du dossier perso en image
 ```
 
 Les boutons apparaissent en jaune barré sur l'image : le moteur de rendu ne dessine pas les

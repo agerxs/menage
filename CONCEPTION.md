@@ -103,6 +103,31 @@ activité, et la commande pour reconstruire (`npm install`, `flutter pub get`…
 - Les tailles affichées sont la **place réellement occupée** (`totalFileAllocatedSize`), pas la
   taille apparente. Sinon `Docker.raw` afficherait 494 Go alors qu'il en occupe 5,9.
 
+Ce qui a été construit (étape 3) :
+- Une seule fenêtre « Ménage » à onglets : Nettoyage, Carte, Gros fichiers, Journal.
+- Le scan couvre le **dossier perso**. Mesuré le 2026-10-26 : 2,4 millions de fichiers, 259 Go,
+  52 s, **112 Mo de mémoire au maximum**. C'était 1,2 Go avant qu'on vide la mémoire temporaire à
+  chaque dossier : pour une app censée soulager la mémoire, c'était rédhibitoire.
+- L'arbre gardé est allégé (44 567 nœuds au lieu de 2,4 millions) : dans chaque dossier, les éléments
+  de moins de 1 Mo sont regroupés en un nœud « N petits éléments », et sous 12 niveaux on ne garde
+  que les totaux.
+- La carte montre les enfants du dossier courant (300 au plus), avec une liste à côté et un fil
+  d'Ariane. Un clic sur un dossier l'ouvre, un clic sur un fichier le sélectionne. Le volet de
+  sélection propose « Afficher dans le Finder » et « Corbeille… », avec confirmation et passage par
+  les chemins protégés.
+- Les gros fichiers (à partir de 100 Mo) viennent du même scan, avec un seuil réglable de 100 Mo à
+  5 Go.
+- Sans accès complet au disque, environ 140 dossiers restent illisibles (Photos, données d'apps
+  système). La carte le dit et propose d'ouvrir le bon réglage.
+- **Liens physiques comptés une seule fois** (par numéro d'inode). Avant, les instantanés de
+  `~/backups` s'affichaient 4,5 Go pour 0,29 Go réels ; le total du dossier perso est désormais celui
+  de `du` (254 Go).
+- **Corbeille manuelle plus stricte que le nettoyeur** (`ManualTrashPolicy`) : depuis la carte, on peut
+  viser n'importe quel nœud. En plus des chemins protégés, tout ce qui est dans `~/Library` est donc
+  refusé, sauf ce qui se régénère : `Caches`, `Developer`, `Android`, `Logs`. Les données d'apps
+  (`Application Support`, `Containers`, `Group Containers`, `Preferences`) se gèrent depuis l'app ou
+  dans le Finder.
+
 ### 4. Historique : « Qu'est-ce qui a grossi ? »
 
 - Après chaque scan, on enregistre la taille de chaque dossier **jusqu'à 3 niveaux sous la racine**,
@@ -154,8 +179,8 @@ menage/
       Safety/            ProtectedPaths, Trash, ActionJournal
       Treemap/           Layout squarified (pur calcul, testable)
     Menage/              ← app SwiftUI
-      MenageApp.swift    MenuBarExtra + Window
-      MenuBar/  Cleaner/  DiskMap/  History/  Settings/
+      MenageApp.swift    MenuBarExtra + fenêtre « Ménage » à onglets (MainWindowView)
+      MenuBar/  Cleaner/  Map/  History/  Settings/
   Tests/MenageCoreTests/
   scripts/bundle.sh      ← build release + assemblage de Menage.app + signature
 ```
@@ -170,9 +195,9 @@ Choix :
 - **Accès complet au disque** : sans lui, certains dossiers (Mail, Messages, Safari) sont illisibles.
   L'app le détecte, le signale (« X dossiers ignorés ») et ouvre le bon panneau des Réglages.
   Elle fonctionne sans.
-- Scanner : `FileManager.enumerator` avec les clés de taille préchargées, un `TaskGroup` par
-  sous-dossier de premier niveau, sans suivre les liens symboliques et sans sortir du volume. On ne
-  passe à `getattrlistbulk` que si le scan complet de `~` (~4 M fichiers) dépasse 2 minutes.
+- Scanner : `contentsOfDirectory` avec les clés de taille préchargées, les sous-dossiers de la racine
+  en parallèle (`DispatchQueue.concurrentPerform`), sans suivre les liens symboliques et sans sortir
+  du volume. Le scan complet de `~` prend 53 s : `getattrlistbulk` n'est pas nécessaire.
 - macOS 14 minimum (`MenuBarExtra`, `Observation`). Ce Mac est en macOS 26.4.
 
 ## Plan de construction

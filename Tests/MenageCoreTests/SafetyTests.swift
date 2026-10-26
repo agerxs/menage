@@ -53,6 +53,44 @@ import Testing
     }
 }
 
+@Suite struct ManualTrashPolicyTests {
+    let home = URL(fileURLWithPath: "/Users/test")
+    var policy: ManualTrashPolicy {
+        ManualTrashPolicy(protected: .standard(home: home, projectRoots: [URL(fileURLWithPath: "/Users/test/devapps")]), home: home)
+    }
+
+    @Test func appDataInLibraryIsRefused() {
+        for path in [
+            "/Users/test/Library/Application Support/Claude/vm_bundles",
+            "/Users/test/Library/Group Containers/group.com.apple.notes",
+            "/Users/test/Library/Containers/com.apple.mail",
+            "/Users/test/Library/Preferences/com.apple.finder.plist",
+            "/Users/test/library/application support/x",
+        ] {
+            #expect(policy.refusal(for: path) != nil, "\(path)")
+        }
+    }
+
+    @Test func regenerableLibraryFoldersAreAllowed() {
+        for path in [
+            "/Users/test/Library/Caches/com.openai.codex",
+            "/Users/test/Library/Developer/Xcode/DerivedData/Runner-x",
+            "/Users/test/Library/Android/sdk/system-images/android-37.1",
+            "/Users/test/Library/Logs/DiagnosticReports",
+        ] {
+            #expect(policy.refusal(for: path) == nil, "\(path)")
+        }
+    }
+
+    @Test func sanctuariesAnchorsAndGroupedNodesAreRefused() {
+        #expect(policy.refusal(for: "/Users/test/Library/Mobile Documents/x/Media.tar") != nil)
+        #expect(policy.refusal(for: "/Users/test/devapps") != nil)
+        #expect(policy.refusal(for: "/Users/test/Downloads/\u{2026}")?.contains("petits éléments") == true)
+        #expect(policy.refusal(for: "/Users/test/Downloads/film.mp4") == nil)
+        #expect(policy.refusal(for: "/Users/test/devapps/vieux-projet") == nil)
+    }
+}
+
 @Suite struct DirectorySizeTests {
     @Test func countsAllocatedBytesAndIgnoresSymlinks() throws {
         let fixture = try Fixture()
