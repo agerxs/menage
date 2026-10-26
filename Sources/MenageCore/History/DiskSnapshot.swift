@@ -6,7 +6,7 @@ public struct DiskSnapshot: Codable, Sendable, Equatable {
     public var date: Date
     public var scannedBytes: Int64
     public var diskFree: Int64
-    /// Chemin relatif au dossier perso (`devapps/vitalis`) → octets.
+    /// Chemin relatif au dossier perso (`devapps/my-app`) → octets.
     public var sizes: [String: Int64]
     /// Dossiers illisibles lors de ce scan (relatifs), comptés 0 octet : ils ne sont pas comparables.
     public var unreadable: [String]

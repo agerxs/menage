@@ -17,16 +17,16 @@ enum HistoryPreview {
         for day in stride(from: 30, through: 0, by: -1) {
             let date = now.addingTimeInterval(-Double(day) * 86_400)
             let codex = Int64(Double(gb) * (1 + Double(30 - day) * 0.1))
-            // Il y a 3 jours : vitalis grossit de 3 Go, et 5 Go de vidéos passent de Téléchargements à devapps.
+            // Il y a 3 jours : my-app grossit de 3 Go, et 5 Go de vidéos passent de Téléchargements à Projects.
             var sizes: [String: Int64] = [
                 "Library": 100 * gb + codex,
                 "Library/Caches": 6 * gb + codex,
                 "Library/Caches/com.openai.codex": codex,
-                "devapps": 60 * gb + (day < 3 ? 8 * gb : 0),
-                "devapps/vitalis": 10 * gb + (day < 3 ? 3 * gb : 0),
+                "Projects": 60 * gb + (day < 3 ? 8 * gb : 0),
+                "Projects/my-app": 10 * gb + (day < 3 ? 3 * gb : 0),
                 "Downloads": day < 3 ? 14 * gb : 19 * gb,
             ]
-            if day < 3 { sizes["devapps/videos"] = 5 * gb } else { sizes["Downloads/videos"] = 5 * gb }
+            if day < 3 { sizes["Projects/videos"] = 5 * gb } else { sizes["Downloads/videos"] = 5 * gb }
             try? store.save(DiskSnapshot(date: date, scannedBytes: 250 * gb, diskFree: (60 - Int64(30 - day)) * gb, sizes: sizes), now: now)
             for hour in stride(from: 0, to: 24, by: 6) {
                 let sample = date.addingTimeInterval(Double(hour) * 3600)
@@ -39,7 +39,7 @@ enum HistoryPreview {
         history.autoScan = UserDefaults.standard.object(forKey: "history.autoScan") as? Bool ?? true
         history.period = .days(7)
 
-        let renderer = ImageRenderer(content: HistoryContent(model: history, map: map) {}
+        let renderer = ImageRenderer(content: HistoryContent(model: history, map: map, showsPeriodPicker: false) {}
             .frame(width: 900)
             .background(Color(nsColor: .windowBackgroundColor))
             .environment(\.colorScheme, .dark))

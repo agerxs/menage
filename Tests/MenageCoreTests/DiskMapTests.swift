@@ -163,7 +163,7 @@ import Testing
     @Test func categories() {
         #expect(FileCategory.of(node("/Users/a/Library/Caches/Firefox")) == .caches)
         #expect(FileCategory.of(node("/Users/a/Library/Developer/Xcode/DerivedData/Runner-x")) == .caches)
-        #expect(FileCategory.of(node("/Users/a/devapps/vitalis/node_modules")) == .code)
+        #expect(FileCategory.of(node("/Users/a/devapps/my-app/node_modules")) == .code)
         #expect(FileCategory.of(node("/Users/a/Downloads/film.mp4", .file)) == .medias)
         #expect(FileCategory.of(node("/Users/a/Downloads/DaVinci.dmg", .file)) == .archives)
         #expect(FileCategory.of(node("/Applications/Xcode.app")) == .apps)

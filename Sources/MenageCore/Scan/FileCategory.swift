@@ -18,7 +18,7 @@ public enum FileCategory: String, Sendable, CaseIterable {
 
     static let codeFolders: Set<String> = [
         "node_modules", ".dart_tool", "Pods", ".gradle", "vendor", ".next", ".git", "target", ".venv",
-        "DerivedData", ".pub-cache", ".npm", ".cargo", ".rustup", "devapps", "develop",
+        "DerivedData", ".pub-cache", ".npm", ".cargo", ".rustup", "devapps", "develop", "Projects", "Developer",
     ]
     static let mediaFolders: Set<String> = ["Movies", "Music", "Pictures", "Photos Library.photoslibrary"]
     static let mediaExtensions: Set<String> = [

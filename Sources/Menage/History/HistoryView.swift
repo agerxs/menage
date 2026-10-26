@@ -40,6 +40,8 @@ struct HistoryView: View {
 struct HistoryContent: View {
     @Bindable var model: HistoryModel
     let map: DiskMapModel
+    /// Faux dans le rendu en image, qui ne sait pas dessiner le sélecteur de période.
+    var showsPeriodPicker = true
     let showOnMap: () -> Void
 
     private static let dateFormat: Date.FormatStyle = .dateTime.day().month(.wide).hour().minute()
@@ -84,13 +86,15 @@ struct HistoryContent: View {
             HStack {
                 Text("Ce qui a grossi").font(.headline)
                 Spacer()
-                Picker("Période", selection: $model.period) {
-                    Text("Depuis la dernière analyse").tag(GrowthReport.Period.lastScan)
-                    Text("Sur 7 jours").tag(GrowthReport.Period.days(7))
-                    Text("Sur 30 jours").tag(GrowthReport.Period.days(30))
+                if showsPeriodPicker {
+                    Picker("Période", selection: $model.period) {
+                        Text("Depuis la dernière analyse").tag(GrowthReport.Period.lastScan)
+                        Text("Sur 7 jours").tag(GrowthReport.Period.days(7))
+                        Text("Sur 30 jours").tag(GrowthReport.Period.days(30))
+                    }
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                .labelsHidden()
-                .fixedSize()
             }
             if let baseline = model.baseline, let latest = model.latest {
                 Text("Du \(baseline.date.formatted(Self.dateFormat)) au \(latest.date.formatted(Self.dateFormat)). Espace libre : \(ByteFormat.string(baseline.diskFree)) → \(ByteFormat.string(latest.diskFree)).")

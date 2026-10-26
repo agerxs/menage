@@ -16,8 +16,8 @@ private func snapshot(_ day: Int, _ sizes: [String: Int64]) -> DiskSnapshot {
         }
         let root = DiskNode(path: "/h", name: "h", kind: .directory, bytes: 900 * mb, children: [
             dir("devapps", 800 * mb, [
-                dir("devapps/vitalis", 700 * mb, [
-                    dir("devapps/vitalis/app", 600 * mb, [dir("devapps/vitalis/app/deep", 500 * mb)]),
+                dir("devapps/my-app", 700 * mb, [
+                    dir("devapps/my-app/app", 600 * mb, [dir("devapps/my-app/app/deep", 500 * mb)]),
                 ]),
                 dir("devapps/tiny", 5 * mb),
             ]),
@@ -28,8 +28,8 @@ private func snapshot(_ day: Int, _ sizes: [String: Int64]) -> DiskSnapshot {
 
         #expect(snap.sizes == [
             "devapps": 800 * mb,
-            "devapps/vitalis": 700 * mb,
-            "devapps/vitalis/app": 600 * mb,
+            "devapps/my-app": 700 * mb,
+            "devapps/my-app/app": 600 * mb,
         ])
         #expect(snap.scannedBytes == 900 * mb)
         #expect(snap.diskFree == 40 * gb)
@@ -97,12 +97,12 @@ private func snapshot(_ day: Int, _ sizes: [String: Int64]) -> DiskSnapshot {
 
     /// devapps +8 Go, dont 5 Go de vidéos venues de Téléchargements : seuls 3 Go sont une vraie croissance.
     @Test func parentGrowthExcludesWhatWasMovedIn() {
-        let old = snapshot(0, ["devapps": 60 * gb, "devapps/vitalis": 10 * gb, "Downloads": 19 * gb, "Downloads/videos": 5 * gb])
-        let new = snapshot(1, ["devapps": 68 * gb, "devapps/vitalis": 13 * gb, "devapps/videos": 5 * gb, "Downloads": 14 * gb])
+        let old = snapshot(0, ["devapps": 60 * gb, "devapps/my-app": 10 * gb, "Downloads": 19 * gb, "Downloads/videos": 5 * gb])
+        let new = snapshot(1, ["devapps": 68 * gb, "devapps/my-app": 13 * gb, "devapps/videos": 5 * gb, "Downloads": 14 * gb])
 
         let report = GrowthReport.growth(from: old, to: new)
-        // devapps : 3 Go réels, entièrement expliqués par vitalis, donc masqué.
-        #expect(report.map(\.path) == ["devapps/videos", "devapps/vitalis"])
+        // devapps : 3 Go réels, entièrement expliqués par my-app, donc masqué.
+        #expect(report.map(\.path) == ["devapps/videos", "devapps/my-app"])
         #expect(report[0].movedFrom == "Downloads/videos")
         #expect(GrowthReport.notable(from: old, to: new, threshold: 5 * gb) == nil)
     }

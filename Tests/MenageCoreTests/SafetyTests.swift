@@ -28,7 +28,7 @@ import Testing
     @Test func insideAnAnchorIsAllowed() {
         #expect(!protected.isProtected(URL(fileURLWithPath: "/Users/test/Downloads/DaVinci.dmg")))
         #expect(!protected.isProtected(URL(fileURLWithPath: "/Users/test/Library/Caches/com.openai.codex")))
-        #expect(!protected.isProtected(URL(fileURLWithPath: "/Users/test/devapps/vitalis/node_modules")))
+        #expect(!protected.isProtected(URL(fileURLWithPath: "/Users/test/devapps/my-app/node_modules")))
     }
 
     @Test func dotDotCannotSneakIntoASanctuary() {

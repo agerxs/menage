@@ -49,7 +49,7 @@ public struct Ecosystem: Sendable, Equatable {
 public struct Project: Sendable, Equatable, Identifiable {
     public var id: String { url.path }
     public var url: URL
-    /// Chemin relatif à la racine où il a été trouvé (`almanach/backend`).
+    /// Chemin relatif à la racine où il a été trouvé (`acme/backend`).
     public var name: String
     public var ecosystems: [String]
     /// Dossiers régénérables présents, déjà filtrés : jamais un dossier suivi par git.
