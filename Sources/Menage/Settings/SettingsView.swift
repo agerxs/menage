@@ -1,9 +1,11 @@
+import AppKit
 import MenageCore
 import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
     @Bindable var monitor: MonitorModel
+    @Bindable var cleaner: CleanerModel
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var loginError: String?
 
@@ -32,6 +34,32 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section {
+                Stepper(value: $cleaner.inactivityDays, in: 15...365, step: 15) {
+                    LabeledContent("Projet inactif après", value: "\(cleaner.inactivityDays) jours")
+                }
+                ForEach(cleaner.projectRoots, id: \.self) { root in
+                    HStack {
+                        Image(systemName: "folder").foregroundStyle(.secondary)
+                        Text(root.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
+                        Spacer()
+                        Button {
+                            cleaner.projectRoots.removeAll { $0 == root }
+                        } label: {
+                            Image(systemName: "minus.circle")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Ne plus chercher de projets ici")
+                    }
+                }
+                Button("Ajouter un dossier de projets…", action: addProjectRoot)
+            } header: {
+                Text("Nettoyeur")
+            } footer: {
+                Text("Ménage cherche les projets dans ces dossiers, jusqu'à 4 niveaux de profondeur.")
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Général") {
                 Toggle("Ouvrir Ménage à l'ouverture de session", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
@@ -51,6 +79,16 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 460)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func addProjectRoot() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Ajouter"
+        guard panel.runModal() == .OK, let url = panel.url, !cleaner.projectRoots.contains(url) else { return }
+        cleaner.projectRoots.append(url)
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) {

@@ -4,10 +4,12 @@ import SwiftUI
 @main
 struct MenageApp: App {
     @State private var monitor = MonitorModel()
+    @State private var cleaner = CleanerModel()
 
     init() {
         #if DEBUG
         PanelSnapshot.renderIfRequested()
+        ScanDump.runIfRequested()
         #endif
     }
 
@@ -19,8 +21,13 @@ struct MenageApp: App {
         }
         .menuBarExtraStyle(.window)
 
+        Window("Faire le ménage", id: CleanerView.windowID) {
+            CleanerView(model: cleaner)
+        }
+        .defaultSize(width: 780, height: 640)
+
         Settings {
-            SettingsView(monitor: monitor)
+            SettingsView(monitor: monitor, cleaner: cleaner)
         }
     }
 }

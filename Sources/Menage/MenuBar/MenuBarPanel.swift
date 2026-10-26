@@ -6,6 +6,7 @@ import SwiftUI
 struct MenuBarPanel: View {
     let monitor: MonitorModel
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -21,6 +22,14 @@ struct MenuBarPanel: View {
             } else {
                 ProgressView().frame(maxWidth: .infinity)
             }
+            Button {
+                NSApp.activate()
+                openWindow(id: CleanerView.windowID)
+            } label: {
+                Label("Faire le ménage…", systemImage: "sparkles")
+                    .frame(maxWidth: .infinity)
+            }
+            .controlSize(.large)
             Divider()
             footer
         }

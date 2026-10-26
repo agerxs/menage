@@ -58,7 +58,7 @@ Règles de la V1 (chiffres relevés le 2026-10-25) :
 |---|---|---|
 | Xcode `DerivedData` | 6,8 Go | Sans risque |
 | Simulateurs iOS indisponibles (`xcrun simctl delete unavailable`) | à mesurer | Sans risque |
-| Caches applicatifs (`~/Library/Caches/*`, liste blanche) | 9,3 Go | Sans risque |
+| Caches applicatifs (`~/Library/Caches/*`, sauf ceux de macOS) | 9,3 Go | Sans risque |
 | Installateurs `.dmg` / `.zip` / `.pkg` d'apps déjà dans `/Applications` | 9,3 Go (DaVinci ×2, FL Studio, ChatGPT) | Sans risque |
 | Artefacts des **projets inactifs** (`node_modules`, `build`, `.next`, `.dart_tool`, `Pods`, `vendor`…) | jusqu'à 26 Go | Régénérable |
 | Images système Android que plus aucun émulateur n'utilise | à mesurer | Régénérable |
@@ -68,10 +68,28 @@ Règles de la V1 (chiffres relevés le 2026-10-25) :
 | Docker : images orphelines, cache de build (`docker system df` puis `prune`) | 5,9 Go réels | Régénérable |
 | Gros fichiers dans Téléchargements (vidéos, archives) | 2 vidéos « Challenge » ≈ 2 Go | À vérifier |
 
+Précisions ajoutées en construisant l'étape 2 :
+- **Caches** : tous les sous-dossiers de `~/Library/Caches` de plus de 50 Mo, sauf ceux de macOS
+  (`com.apple.*`, `CloudKit`) et `ms-playwright*`, qui contient les navigateurs de Playwright et pas un
+  cache.
+- **Installateurs** (pré-cochés, donc la règle préfère en rater un que se tromper) : un `.dmg`,
+  `.pkg` ou `.xip` dont le nom **commence** par celui d'une app installée, rangée à la racine de
+  `/Applications` ou un niveau plus bas (`DaVinci Resolve/`). Les apps d'Apple sont écartées (Pages,
+  Safari… ne s'installent jamais ainsi). Jamais de `.zip` : une archive peut contenir n'importe quoi,
+  elle reste dans « Gros fichiers », à vérifier.
+- **NDK** : on garde la plus récente, celles écrites dans un fichier Gradle, et celle du SDK Flutter
+  quand un projet dit `ndkVersion = flutter.ndkVersion` (lue via `flutter.sdk` dans `local.properties`).
+- **Émulateurs cassés** : si le SDK Android n'est pas là où on le cherche, la règle ne conclut rien.
+- **Docker** : seulement le cache de build et les images orphelines (`builder prune --all`,
+  `image prune`), jamais les conteneurs arrêtés ni les volumes. Si Docker n'est pas lancé, la règle le dit.
+- Les commandes externes sont arrêtées au bout de 2 minutes.
+- Seul le niveau **Sans risque** est pré-coché.
+
 **Projets inactifs.** L'app parcourt les racines configurées (par défaut `~/devapps`, `~/develop`)
 jusqu'à 4 niveaux et reconnaît un projet à ses marqueurs (`package.json`, `pubspec.yaml`,
-`composer.json`, `build.gradle`, `Podfile`, `Cargo.toml`). La dernière activité, c'est la date du
-dernier commit git, sinon la modification la plus récente d'un fichier source (artefacts exclus).
+`composer.json`, `build.gradle`, `Podfile`, `Cargo.toml`). La dernière activité, c'est la plus
+récente entre le dernier commit git et la dernière modification d'un fichier source (artefacts
+exclus) : un projet modifié hier sans commit depuis des mois est actif.
 Inactif = rien depuis 60 jours, seuil réglable. Pour chaque projet : poids régénérable, dernière
 activité, et la commande pour reconstruire (`npm install`, `flutter pub get`…).
 
@@ -102,13 +120,24 @@ activité, et la commande pour reconstruire (`npm install`, `flutter pub get`…
 2. Les seules exceptions sont les règles qui passent par un outil (Docker `prune`, `simctl delete`) :
    elles sont marquées « Commande », et la commande exacte est affichée avant de la lancer.
 3. **Aperçu obligatoire** : liste exacte des chemins et taille totale, puis confirmation.
-4. **Chemins protégés**, jamais proposés même dans la carte : `~/ai-brain`, `~/.ssh`, `~/.gnupg`,
-   `~/Library/Keychains`, `~/Library/Mobile Documents` (iCloud), `~/Documents`, `~/Desktop`, `/System`, et
-   tout dépôt git qui a des modifications non commitées.
+4. **Chemins protégés**, vérifiés à l'analyse puis de nouveau juste avant la Corbeille :
+   - les *sanctuaires*, ni eux ni leur contenu : `~/ai-brain`, `~/.ssh`, `~/.gnupg`, `~/Documents`,
+     `~/Desktop`, `~/Pictures`, `~/Library/Keychains`, `~/Library/Mobile Documents` (iCloud), Mail,
+     Messages, `/System`, `/usr`, `/private` ;
+   - les *ancres*, dont on peut vider le contenu mais jamais supprimer le dossier lui-même :
+     `~`, `~/Library`, `~/Library/Caches`, `~/Downloads`, `/Applications`, les racines de projets…
+   - supprimer le parent d'un sanctuaire ou d'une ancre est refusé aussi.
+
+   L'idée de départ, « tout dépôt git avec des modifications non commitées », visait mal : ces
+   modifications sont dans le code, que l'app ne touche jamais. Le vrai risque est un dossier au nom
+   d'artefact qui contient du code (un `build/` ou un `vendor/` commité). D'où la règle suivante.
 5. **Journal** de chaque action (date, chemins, taille libérée) dans
    `~/Library/Application Support/Menage/journal.jsonl`, consultable dans l'app.
 6. La règle « artefacts de projets » ne touche que les noms de dossiers connus, **dans** un projet
-   reconnu. Jamais un `build/` isolé.
+   reconnu. Jamais un `build/` isolé. **Un dossier qui contient un seul fichier suivi par git n'est
+   jamais un artefact.** Les noms ambigus (`build`, `dist`, `vendor`, `venv`) doivent en plus être
+   ignorés par git (`git check-ignore`) ; hors dépôt git, on ne peut pas le prouver, donc on s'abstient.
+   Les noms sans ambiguïté (`node_modules`, `.dart_tool`, `Pods`, `.gradle`, `target`, `.venv`) passent.
 
 ## Architecture
 
