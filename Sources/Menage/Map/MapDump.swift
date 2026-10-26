@@ -34,8 +34,11 @@ enum MapDump {
         let root = directory == "demo"
             ? demoHome()
             : DiskScanner().scan(URL(fileURLWithPath: (directory as NSString).expandingTildeInPath)).root
+        // MENAGE_TREEMAP_SIZE=720x500 : taille en points (rendu ×2). Par défaut 900x540.
+        let size = (ProcessInfo.processInfo.environment["MENAGE_TREEMAP_SIZE"] ?? "900x540")
+            .split(separator: "x").compactMap { Double($0) }
         let renderer = ImageRenderer(content: TreemapView(node: root, selectedPath: root.children.first?.path) { _ in }
-            .frame(width: 900, height: 540)
+            .frame(width: size.first ?? 900, height: size.count > 1 ? size[1] : 540)
             .padding(12)
             .background(Color(nsColor: .windowBackgroundColor))
             .environment(\.colorScheme, .dark))
